@@ -1,5 +1,10 @@
 package pl.aaugustyniak.legal.feast;
 
+import com.google.code.tempusfugit.concurrency.ConcurrentRule;
+import com.google.code.tempusfugit.concurrency.ConcurrentTestRunner;
+import com.google.code.tempusfugit.concurrency.RepeatingRule;
+import com.google.code.tempusfugit.concurrency.annotations.Concurrent;
+import com.google.code.tempusfugit.concurrency.annotations.Repeating;
 import java.util.Date;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -7,13 +12,25 @@ import org.joda.time.format.DateTimeFormatter;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import util.InstanceProvider;
 
 /**
  *
  * @author aaugustyniak
  */
+@RunWith(ConcurrentTestRunner.class)
 public class MoveableFeastTest {
+
+    private static final int CYCLES = 9;
+    private static final int THREADS = 100;
+
+    @Rule
+    public ConcurrentRule rule = new ConcurrentRule();
+    @Rule
+    public RepeatingRule repeatedly = new RepeatingRule();
 
     private final String[] provenWorkDays = {
         "2011-06-13",
@@ -54,9 +71,11 @@ public class MoveableFeastTest {
 
     @BeforeClass
     public static void beforeClass() {
-        mf = new MoveableFeast();
+        mf = InstanceProvider.<MoveableFeast>getInst(MoveableFeast.class);
     }
 
+    @Concurrent(count = THREADS)
+    @Repeating(repetition = CYCLES)
     @Test(expected = IllegalArgumentException.class)
     public void testExceptionWithUnparsableString() {
         String s = "#!";
@@ -64,12 +83,16 @@ public class MoveableFeastTest {
     }
 
     @Test
+    @Concurrent(count = THREADS)
+    @Repeating(repetition = CYCLES)
     public void testIsFeastWithString() {
         String s = provenFeasts[0];
         assertTrue(mf.isFeast(s, MoveableFeast.ISO8601_DATE_FORMAT));
     }
 
     @Test
+    @Concurrent(count = THREADS)
+    @Repeating(repetition = CYCLES)
     public void testIsFeastWithObject() {
         DateTimeFormatter formatter = DateTimeFormat.forPattern(MoveableFeast.ISO8601_DATE_FORMAT);
         DateTime dt = formatter.parseDateTime(provenFeasts[0]);
@@ -78,6 +101,8 @@ public class MoveableFeastTest {
     }
 
     @Test
+    @Concurrent(count = THREADS)
+    @Repeating(repetition = CYCLES)
     public void testProvenFeasts() {
 
         for (String day : provenFeasts) {
@@ -86,6 +111,8 @@ public class MoveableFeastTest {
     }
 
     @Test
+    @Concurrent(count = THREADS)
+    @Repeating(repetition = CYCLES)
     public void testProvenWorkDays() {
         for (String day : provenWorkDays) {
             assertFalse(mf.isFeast(day, MoveableFeast.ISO8601_DATE_FORMAT));

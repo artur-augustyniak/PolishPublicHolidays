@@ -1,5 +1,8 @@
 package pl.aaugustyniak.legal.feast;
 
+import com.google.code.tempusfugit.concurrency.annotations.GuardedBy;
+import static com.google.code.tempusfugit.concurrency.annotations.GuardedBy.Type.ITSELF;
+import com.google.code.tempusfugit.concurrency.annotations.ThreadSafe;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -10,13 +13,20 @@ import org.joda.time.format.DateTimeFormatter;
 
 /**
  *
+ * @TODO https://docs.oracle.com/javase/tutorial/i18n/index.html
+ * http://stackoverflow.com/questions/2201925/converting-iso-8601-compliant-string-to-java-util-date
+ * http://www.oracle.com/us/technologies/java/locale-140624.html
+ * http://stackoverflow.com/questions/9282419/how-can-i-get-the-number-of-days-in-a-year-using-jodatime
+ * http://stackoverflow.com/questions/1339351/java-date-format-for-locale
  * @author aaugustyniak
  */
+@ThreadSafe
 public class MoveableFeast {
 
     public static final String ISO8601_DATE_FORMAT = "yyyy-MM-dd";
-    private Locale locale;
-    private final Map<Integer, String> feastDays;
+
+    @GuardedBy(lock = ITSELF)
+    private final Locale locale;
 
     /**
      * Default constructor. Set locale to current system default.
@@ -30,9 +40,7 @@ public class MoveableFeast {
      */
     public MoveableFeast(Locale l) {
         locale = l;
-        feastDays = new HashMap<>();
-        feastDays.put(1, "Nowy Rok");
-        feastDays.put(6, "Trzech Króli");
+
     }
 
     /**
@@ -42,7 +50,23 @@ public class MoveableFeast {
      * @return
      */
     public boolean isFeast(DateTime day) {
-        initMovableFestsFor(day.getYear());
+
+        int year = day.getYear();
+        int leapYearStep = (isLeap(year)) ? 1 : 0;
+        int easterFirstDay = findFirstEasterDayIn(year);
+        Map<Integer, String> feastDays = new HashMap<>();
+        feastDays.put(1, "Nowy Rok");
+        feastDays.put(6, "Trzech Króli");
+        feastDays.put(easterFirstDay, "Niedziela Wielkanocna");
+        feastDays.put(1 + easterFirstDay, "Poniedziałek Wielkanocny");
+        feastDays.put(121 + leapYearStep, "święto Pracy");
+        feastDays.put(123 + leapYearStep, "Trzeciego Maja");
+        feastDays.put(49 + easterFirstDay, "Zesłanie Ducha Świętego");
+        feastDays.put(60 + easterFirstDay, "Boże Ciało");
+        feastDays.put(305 + leapYearStep, "Wszystkich Świętych");
+        feastDays.put(315 + leapYearStep, "Święto niepodległości");
+        feastDays.put(359 + leapYearStep, "Boże Narodzenie I");
+        feastDays.put(360 + leapYearStep, "Boże Narodzenie II");
         int dayOfYear = day.getDayOfYear();
         return feastDays.containsKey(dayOfYear);
     }
@@ -78,23 +102,6 @@ public class MoveableFeast {
     public boolean isFeast(Date day) {
         DateTime dt = new DateTime(day);
         return isFeast(dt);
-    }
-
-    private void initMovableFestsFor(int year) {
-
-        int leapYearStep = (isLeap(year)) ? 1 : 0;
-        int easterFirstDay = findFirstEasterDayIn(year);
-        feastDays.put(easterFirstDay, "Niedziela Wielkanocna");
-        feastDays.put(1 + easterFirstDay, "Poniedziałek Wielkanocny");
-        feastDays.put(121 + leapYearStep, "święto Pracy");
-        feastDays.put(123 + leapYearStep, "Trzeciego Maja");
-        feastDays.put(49 + easterFirstDay, "Zesłanie Ducha Świętego");
-        feastDays.put(60 + easterFirstDay, "Boże Ciało");
-        feastDays.put(305 + leapYearStep, "Wszystkich Świętych");
-        feastDays.put(315 + leapYearStep, "Święto niepodległości");
-        feastDays.put(359 + leapYearStep, "Boże Narodzenie I");
-        feastDays.put(360 + leapYearStep, "Boże Narodzenie II");
-
     }
 
     private int findFirstEasterDayIn(int year) {
