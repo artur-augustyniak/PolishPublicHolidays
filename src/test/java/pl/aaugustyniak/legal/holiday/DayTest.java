@@ -1,4 +1,4 @@
-package pl.aaugustyniak.legal.feast;
+package pl.aaugustyniak.legal.holiday;
 
 import com.google.code.tempusfugit.concurrency.ConcurrentRule;
 import com.google.code.tempusfugit.concurrency.ConcurrentTestRunner;
@@ -22,7 +22,7 @@ import util.InstanceProvider;
  * @author aaugustyniak
  */
 @RunWith(ConcurrentTestRunner.class)
-public class MoveableFeastTest {
+public class DayTest {
 
     private static final int CYCLES = 9;
     private static final int THREADS = 100;
@@ -67,11 +67,11 @@ public class MoveableFeastTest {
         "2013-12-26"
     };
 
-    private static MoveableFeast mf;
+    private static Day mf;
 
     @BeforeClass
     public static void beforeClass() {
-        mf = InstanceProvider.<MoveableFeast>getInst(MoveableFeast.class);
+        mf = InstanceProvider.<Day>getInst(Day.class);
     }
 
     @Concurrent(count = THREADS)
@@ -79,7 +79,7 @@ public class MoveableFeastTest {
     @Test(expected = IllegalArgumentException.class)
     public void testExceptionWithUnparsableString() {
         String s = "#!";
-        mf.isFeast(s);
+        mf.isOff(s);
     }
 
     @Test
@@ -87,17 +87,17 @@ public class MoveableFeastTest {
     @Repeating(repetition = CYCLES)
     public void testIsFeastWithString() {
         String s = provenFeasts[0];
-        assertTrue(mf.isFeast(s, MoveableFeast.ISO8601_DATE_FORMAT));
+        assertTrue(mf.isOff(s, Day.ISO8601_DATE_FORMAT));
     }
 
     @Test
     @Concurrent(count = THREADS)
     @Repeating(repetition = CYCLES)
     public void testIsFeastWithObject() {
-        DateTimeFormatter formatter = DateTimeFormat.forPattern(MoveableFeast.ISO8601_DATE_FORMAT);
+        DateTimeFormatter formatter = DateTimeFormat.forPattern(Day.ISO8601_DATE_FORMAT);
         DateTime dt = formatter.parseDateTime(provenFeasts[0]);
         Date param = dt.toDate();
-        assertTrue(mf.isFeast(param));
+        assertTrue(mf.isOff(param));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class MoveableFeastTest {
     public void testProvenFeasts() {
 
         for (String day : provenFeasts) {
-            assertTrue(mf.isFeast(day, MoveableFeast.ISO8601_DATE_FORMAT));
+            assertTrue(mf.isOff(day, Day.ISO8601_DATE_FORMAT));
         }
     }
 
@@ -115,7 +115,7 @@ public class MoveableFeastTest {
     @Repeating(repetition = CYCLES)
     public void testProvenWorkDays() {
         for (String day : provenWorkDays) {
-            assertFalse(mf.isFeast(day, MoveableFeast.ISO8601_DATE_FORMAT));
+            assertFalse(mf.isOff(day, Day.ISO8601_DATE_FORMAT));
         }
     }
 }

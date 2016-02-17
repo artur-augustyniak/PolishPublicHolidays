@@ -1,27 +1,28 @@
-package pl.aaugustyniak.legal.feast;
+package pl.aaugustyniak.legal.holiday;
 
 import com.google.code.tempusfugit.concurrency.annotations.GuardedBy;
-import static com.google.code.tempusfugit.concurrency.annotations.GuardedBy.Type.ITSELF;
 import com.google.code.tempusfugit.concurrency.annotations.ThreadSafe;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import static com.google.code.tempusfugit.concurrency.annotations.GuardedBy.Type.ITSELF;
+
 /**
- *
+ * @author aaugustyniak
  * @TODO https://docs.oracle.com/javase/tutorial/i18n/index.html
  * http://stackoverflow.com/questions/2201925/converting-iso-8601-compliant-string-to-java-util-date
  * http://www.oracle.com/us/technologies/java/locale-140624.html
  * http://stackoverflow.com/questions/9282419/how-can-i-get-the-number-of-days-in-a-year-using-jodatime
  * http://stackoverflow.com/questions/1339351/java-date-format-for-locale
- * @author aaugustyniak
  */
 @ThreadSafe
-public class MoveableFeast {
+public class Day {
 
     public static final String ISO8601_DATE_FORMAT = "yyyy-MM-dd";
 
@@ -31,29 +32,29 @@ public class MoveableFeast {
     /**
      * Default constructor. Set locale to current system default.
      */
-    public MoveableFeast() {
+    public Day() {
         this(Locale.getDefault());
     }
 
     /**
      * @param l
      */
-    public MoveableFeast(Locale l) {
+    public Day(Locale l) {
         locale = l;
 
     }
 
     /**
-     * Check if given day is official feast in Poland
+     * Check if given day is off in Poland
      *
-     * @param day
+     * @param date
      * @return
      */
-    public boolean isFeast(DateTime day) {
+    public boolean isOff(DateTime date) {
 
-        int year = day.getYear();
+        int year = date.getYear();
         int leapYearStep = (isLeap(year)) ? 1 : 0;
-        int easterFirstDay = findFirstEasterDayIn(year);
+        int easterFirstDay = gaussianFindFirstEasterDayNumberIn(year);
         Map<Integer, String> feastDays = new HashMap<>();
         feastDays.put(1, "Nowy Rok");
         feastDays.put(6, "Trzech Króli");
@@ -67,44 +68,43 @@ public class MoveableFeast {
         feastDays.put(315 + leapYearStep, "Święto niepodległości");
         feastDays.put(359 + leapYearStep, "Boże Narodzenie I");
         feastDays.put(360 + leapYearStep, "Boże Narodzenie II");
-        int dayOfYear = day.getDayOfYear();
+        int dayOfYear = date.getDayOfYear();
         return feastDays.containsKey(dayOfYear);
     }
 
     /**
-     * Check if given day is official feast in Poland parse date string with
+     * Check if given day is off in Poland parse date string with
      * given format
      *
      * @param day
      * @param datePattern
      * @return
      */
-    public boolean isFeast(String day, String datePattern) {
+    public boolean isOff(String day, String datePattern) {
         DateTimeFormatter formatter = DateTimeFormat.forPattern(datePattern);
-        return isFeast(formatter.parseDateTime(day));
+        return isOff(formatter.parseDateTime(day));
     }
 
     /**
-     * @see #isFest(java.lang.String, java.lang.String)
      * @param day
      * @return
+     * @see #isOff(java.lang.String, java.lang.String)
      */
-    public boolean isFeast(String day) {
-        return isFeast(day, DateTimeFormat.patternForStyle("S-", locale));
+    public boolean isOff(String day) {
+        return isOff(day, DateTimeFormat.patternForStyle("S-", locale));
     }
 
     /**
-     * @see #isFeast(org.joda.time.DateTime)
-     *
      * @param day
      * @return
+     * @see #isOff(org.joda.time.DateTime)
      */
-    public boolean isFeast(Date day) {
+    public boolean isOff(Date day) {
         DateTime dt = new DateTime(day);
-        return isFeast(dt);
+        return isOff(dt);
     }
 
-    private int findFirstEasterDayIn(int year) {
+    private int gaussianFindFirstEasterDayNumberIn(int year) {
         int leapYearStep = (isLeap(year)) ? 1 : 0;
         int w1 = year % 19;
         int w2 = year / 100;
